@@ -8,31 +8,29 @@ const FORMAT_UNCHANGED = ' ';
 
 function getDiff(string $filePath1, string $filePath2)
 {
-    $data1 = readArrayFromJsonFile($filePath1);
-    $data2 = readArrayFromJsonFile($filePath2);
-    return generateDiff($data1, $data2);
+    $data1 = json_decode(file_get_contents($filePath1), true);
+    $data2 = json_decode(file_get_contents($filePath2), true);
+    return generateDiffString($data1, $data2);
 }
 
-function readArrayFromJsonFile($filePath)
+function generateDiffString(array $before, array $after)
 {
-    return json_decode(file_get_contents($filePath), true);
-}
+    $allPropertiesNames = array_unique(array_merge(array_keys($before), array_keys($after)));
 
-function generateDiff(array $data1, array $data2)
-{
-    $uniqueKeys = array_unique(array_merge(array_keys($data1), array_keys($data2)));
-    $diffStrings = array_reduce($uniqueKeys, function ($acc, $key) use ($data1, $data2) {
-        $value = $data1[$key] ?? $data2[$key];
-        $isKeyRemoved = !array_key_exists($key, $data2);
-        $isKeyAdded = !array_key_exists($key, $data1);
+    $diffStrings = array_reduce($allPropertiesNames, function ($acc, $name) use ($before, $after) {
+        $isKeyRemoved = !array_key_exists($name, $after);
+        $isKeyAdded = !array_key_exists($name, $before);
+
         if ($isKeyAdded || $isKeyRemoved) {
-            $acc[] = formatDiffString($key, $value, $isKeyAdded ? FORMAT_ADDED : FORMAT_REMOVED);
-        } elseif ($data1[$key] === $data2[$key]) {
-            $acc[] = formatDiffString($key, $value, FORMAT_UNCHANGED);
+            $value = $before[$name] ?? $after[$name];
+            $acc[] = formatDiffString($name, $value, $isKeyAdded ? FORMAT_ADDED : FORMAT_REMOVED);
+        } elseif ($before[$name] === $after[$name]) {
+            $acc[] = formatDiffString($name, $before[$name], FORMAT_UNCHANGED);
         } else {
-            $acc[] = formatDiffString($key, $data2[$key], FORMAT_ADDED);
-            $acc[] = formatDiffString($key, $data1[$key], FORMAT_REMOVED);
+            $acc[] = formatDiffString($name, $after[$name], FORMAT_ADDED);
+            $acc[] = formatDiffString($name, $before[$name], FORMAT_REMOVED);
         }
+
         return $acc;
     }, ['{']);
     $diffStrings[] = '}';

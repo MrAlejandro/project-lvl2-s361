@@ -3,10 +3,12 @@
 namespace App;
 
 use Docopt\Handler;
+use function Differ\getDiff;
 
 function run()
 {
     $args = (new Handler)->handle(getDoc());
+    echo getDiff($args['<firstFile>'], $args['<secondFile>']) . PHP_EOL;
 }
 
 function getDoc()
