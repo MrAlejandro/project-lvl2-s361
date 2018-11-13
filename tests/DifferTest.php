@@ -36,6 +36,7 @@ class DifferTest extends TestCase
                 '  - timeout: 50',
                 '  - proxy: 123.234.53.22',
                 '  + verbose: true',
+                '  + headers: null',
                 '}'
             ]
         );
@@ -59,7 +60,8 @@ JSON;
 {
   "timeout": 20,
   "verbose": true,
-  "host": "hexlet.io"
+  "host": "hexlet.io",
+  "headers": null
 }
 JSON;
     }
