@@ -7,7 +7,7 @@ use function Differ\getDiff;
 
 function run()
 {
-    $args = (new Handler)->handle(getDoc());
+    $args = (new Handler())->handle(getDoc());
     echo getDiff($args['<firstFile>'], $args['<secondFile>']) . PHP_EOL;
 }
 
