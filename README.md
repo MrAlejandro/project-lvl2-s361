@@ -9,3 +9,6 @@
 
 ### Flat JSON diff example
 [![asciicast](https://asciinema.org/a/ZWbeAQCKcbrk8k9crGS8EnPzc.svg)](https://asciinema.org/a/ZWbeAQCKcbrk8k9crGS8EnPzc)
+
+### Flat YAML diff example
+[![asciicast](https://asciinema.org/a/ELCqCmPHg6xjbfAulCfCbKygE.svg)](https://asciinema.org/a/ELCqCmPHg6xjbfAulCfCbKygE)
