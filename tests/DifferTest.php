@@ -9,60 +9,9 @@ use function \Differ\getDiff;
 
 class DifferTest extends TestCase
 {
-    /** @var \org\bovigo\vfs\vfsStreamDirectory */
-    protected $fs;
-
-    public function setUp()
+    public function testGenerateDiffForJsonFiles()
     {
-        $jsonFiles = [
-            'json' => [
-                'file1.json' => $this->getFirstJsonFileContent(),
-                'file2.json' => $this->getSecondJsonFileContent(),
-            ]
-        ];
-
-        $this->fs = vfsStream::setup('root', 444, $jsonFiles);
-    }
-
-    public function testReadFiles()
-    {
-        $diff = getDiff($this->fs->url() . '/json/file1.json', $this->fs->url() . '/json/file2.json');
-        $expected = implode(
-            PHP_EOL,
-            [
-                '{',
-                '    host: hexlet.io',
-                '  + timeout: 20',
-                '  - timeout: 50',
-                '  - proxy: 123.234.53.22',
-                '  + verbose: true',
-                '  + headers: null',
-                '}'
-            ]
-        );
-        $this->assertEquals($expected, $diff);
-    }
-
-    protected function getFirstJsonFileContent(): string
-    {
-        return <<<JSON
-{
-  "host": "hexlet.io",
-  "timeout": 50,
-  "proxy": "123.234.53.22"
-}
-JSON;
-    }
-
-    protected function getSecondJsonFileContent(): string
-    {
-        return <<<JSON
-{
-  "timeout": 20,
-  "verbose": true,
-  "host": "hexlet.io",
-  "headers": null
-}
-JSON;
+        $diff = getDiff(__DIR__ . '/fixtures/before.json', __DIR__ . '/fixtures/after.json');
+        $this->assertStringEqualsFile(__DIR__ . '/fixtures/expected.diff', $diff);
     }
 }
