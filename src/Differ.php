@@ -2,18 +2,21 @@
 
 namespace Differ;
 
+use function FileParserFactory\getParser;
+
 const FORMAT_ADDED = '+';
 const FORMAT_REMOVED = '-';
 const FORMAT_UNCHANGED = ' ';
 
-function getDiff(string $filePath1, string $filePath2)
+function getDiff(string $firstFile, string $secondFile): string
 {
-    $data1 = json_decode(file_get_contents($filePath1), true);
-    $data2 = json_decode(file_get_contents($filePath2), true);
+    $parse = getParser($firstFile, $secondFile);
+    $data1 = $parse($firstFile);
+    $data2 = $parse($secondFile);
     return generateDiffString($data1, $data2);
 }
 
-function generateDiffString(array $before, array $after)
+function generateDiffString(array $before, array $after): string
 {
     $allPropertiesNames = array_unique(array_merge(array_keys($before), array_keys($after)));
 
@@ -37,7 +40,7 @@ function generateDiffString(array $before, array $after)
 
     return implode(PHP_EOL, $diffStrings);
 }
-function formatDiffString($key, $value, $format)
+function formatDiffString($key, $value, $format): string
 {
     return sprintf('  %s %s: %s', $format, $key, stringifyValue($value));
 }
