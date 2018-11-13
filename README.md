@@ -6,3 +6,6 @@
 
 ### Installation
 [![asciicast](https://asciinema.org/a/yej0r1P5cPvrehOK6Ht4oqcRb.svg)](https://asciinema.org/a/yej0r1P5cPvrehOK6Ht4oqcRb)
+
+### Flat JSON diff example
+[![asciicast](https://asciinema.org/a/ZWbeAQCKcbrk8k9crGS8EnPzc.svg)](https://asciinema.org/a/ZWbeAQCKcbrk8k9crGS8EnPzc)
