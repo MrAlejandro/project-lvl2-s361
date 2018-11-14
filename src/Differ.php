@@ -2,6 +2,9 @@
 
 namespace Differ;
 
+use Exceptions\DiffFilesExtensionMismatchException;
+use Exceptions\CannotReadFileException;
+
 use function FileParserFactory\getParser;
 
 const FORMAT_ADDED = '+';
@@ -10,10 +13,37 @@ const FORMAT_UNCHANGED = ' ';
 
 function getDiff(string $firstFile, string $secondFile): string
 {
-    $parse = getParser($firstFile, $secondFile);
-    $data1 = $parse($firstFile);
-    $data2 = $parse($secondFile);
+    throwExceptionIfFileNotReadable($firstFile);
+    throwExceptionIfFileNotReadable($secondFile);
+
+    $extension = getFilesCommonExtensionOrThrowException($firstFile, $secondFile);
+    $parse = getParser($extension);
+
+    $data1 = $parse(file_get_contents($firstFile));
+    $data2 = $parse(file_get_contents($secondFile));
+
     return generateDiffString($data1, $data2);
+}
+
+function throwExceptionIfFileNotReadable(string $filePath)
+{
+    if (!file_exists($filePath) || !is_readable($filePath)) {
+        throw new CannotReadFileException($filePath);
+    }
+}
+
+function getFilesCommonExtensionOrThrowException(...$files): string
+{
+    $extensions = array_map(function ($file) {
+        return pathinfo($file, PATHINFO_EXTENSION);
+    }, $files);
+
+    $isSameExtension = count(array_unique($extensions)) === 1;
+    if (!$isSameExtension) {
+        throw new DiffFilesExtensionMismatchException();
+    }
+
+    return $extensions[0];
 }
 
 function generateDiffString(array $before, array $after): string

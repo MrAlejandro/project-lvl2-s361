@@ -18,7 +18,7 @@ function run()
     } catch (DiffFilesExtensionMismatchException $e) {
         echo 'Cannot generate diff for two files of different types';
     } catch (InvalidFormattedFileException $e) {
-        echo sprintf('Invalidly formatted file supplied %s', $e->getMessage());
+        echo 'Invalidly formatted file supplied';
     } catch (UnknownFileExtensionException $e) {
         echo sprintf('Unknown file format %s', $e->getMessage());
     } catch (CannotReadFileException $e) {

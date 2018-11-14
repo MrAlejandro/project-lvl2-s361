@@ -5,7 +5,6 @@ namespace App\Tests;
 use PHPUnit\Framework\TestCase;
 use Exceptions\DiffFilesExtensionMismatchException;
 use Exceptions\InvalidFormattedFileException;
-use Exceptions\UnknownFileExtensionException;
 use Exceptions\CannotReadFileException;
 
 use function \Differ\getDiff;
@@ -46,11 +45,5 @@ class DifferTest extends TestCase
     {
         $this->expectException(InvalidFormattedFileException::class);
         getDiff(__DIR__ . '/fixtures/json/before.json', __DIR__ . '/fixtures/json/invalid.json');
-    }
-
-    public function testUnknownFileExtensionException()
-    {
-        $this->expectException(UnknownFileExtensionException::class);
-        getDiff('file1.xml', __DIR__ . 'file2.xml');
     }
 }
