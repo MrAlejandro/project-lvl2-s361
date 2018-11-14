@@ -1,11 +1,8 @@
 <?php
 
-namespace FileParserFactory;
+namespace Differ\FileParserFactory;
 
 use Symfony\Component\Yaml\Yaml;
-use Symfony\Component\Yaml\Exception\ParseException;
-use Exceptions\InvalidFormattedFileException;
-use Exceptions\UnknownFileExtensionException;
 
 function getParser($extension): callable
 {
@@ -14,30 +11,23 @@ function getParser($extension): callable
             return getYamlFileParser();
         case 'json':
             return getJsonFileParser();
+        default:
+            return function () {
+                return [];
+            };
     }
-
-    throw new UnknownFileExtensionException($extension);
 }
 
 function getYamlFileParser(): \Closure
 {
     return function ($yaml) {
-        try {
-            return Yaml::parse($yaml);
-        } catch (ParseException $e) {
-            throw new InvalidFormattedFileException();
-        }
+        return Yaml::parse($yaml);
     };
 }
 
 function getJsonFileParser(): \Closure
 {
     return function ($json) {
-        $decoded = json_decode($json, true);
-        if ($decoded === null) {
-            throw new InvalidFormattedFileException();
-        }
-
-        return $decoded;
+        return json_decode($json, true);
     };
 }
