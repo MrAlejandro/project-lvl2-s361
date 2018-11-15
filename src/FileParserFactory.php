@@ -31,12 +31,3 @@ function getJsonFileParser(): \Closure
         return json_decode($json, true);
     };
 }
-
-function parseNestedJson($json)
-{
-    $parsed = json_decode($json, true);
-    $result = array_map($parsed, function () {
-        
-    });
-    return $result;
-}
