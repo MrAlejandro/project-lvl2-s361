@@ -2,6 +2,7 @@
 
 namespace Differ\FileParserFactory;
 
+use PHP_CodeSniffer\Exceptions\RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 
 function getParser($extension): callable
@@ -12,9 +13,7 @@ function getParser($extension): callable
         case 'json':
             return getJsonFileParser();
         default:
-            return function () {
-                return [];
-            };
+            throw new RuntimeException('Cannot find reader for provided format');
     }
 }
 

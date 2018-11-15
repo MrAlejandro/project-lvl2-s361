@@ -7,6 +7,11 @@ use function Differ\FileParserFactory\getParser;
 const FORMAT_ADDED = '+';
 const FORMAT_REMOVED = '-';
 const FORMAT_UNCHANGED = ' ';
+const LINE_STATE_FORMAT_MAP = [
+    'added' => '+',
+    'removed' => '-',
+    'unchanged' => ' ',
+];
 
 function getDiff(string $firstFile, string $secondFile): string
 {
@@ -45,6 +50,21 @@ function generateDiffString(array $before, array $after): string
     $diffStrings[] = '}';
 
     return implode(PHP_EOL, $diffStrings);
+}
+
+function buildDiffFromAst(array $ast, int $level = 0)
+{
+    $offset = str_pad('', $level * 4, ' ');
+    $diffLines = array_reduce($ast, function ($acc, $item) use ($level, $offset) {
+        $format = LINE_STATE_FORMAT_MAP[$item['state']];
+        $value = is_array($item['value']) ? buildDiffFromAst($item['value'], $level + 1) : $item['value'];
+        $acc[] = sprintf('%s  %s %s: %s', $offset, $format, $item['name'], $value);
+        return $acc;
+    }, ['{']);
+
+    $diffLines[] = sprintf('%s}', $offset);
+
+    return implode(PHP_EOL, $diffLines);
 }
 
 function formatDiffString($key, $value, $format): string
