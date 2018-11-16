@@ -29,6 +29,81 @@ function getDiff(string $firstFile, string $secondFile): string
     return $diff;
 }
 
+function buildAST(array $before, array $after)
+{
+    $allPropertiesNames = array_unique(array_merge(array_keys($before), array_keys($after)));
+    $ast = array_reduce($allPropertiesNames, function ($acc, $name) use ($before, $after) {
+        [$beforeValue, $afterValue] = getNormalizedValues($name, $before, $after);
+
+        if ($beforeValue === $afterValue) {
+            $acc[] = prepareASTNode(LINE_STATE_UNCHANGED, $name, $beforeValue, $afterValue);
+        } elseif ($afterValue === null || $beforeValue === null) {
+            $state = $beforeValue === null ? LINE_STATE_ADDED : LINE_STATE_REMOVED;
+            $value = $beforeValue ?? $afterValue;
+            $acc[] = prepareASTNode($state, $name, $value, $value);
+        } else {
+            if (is_array($before[$name]) && is_array($after[$name])) {
+                $acc[] = prepareASTNode(LINE_STATE_UNCHANGED, $name, $beforeValue, $afterValue);
+            } elseif (is_array($before[$name])) {
+                $acc[] = prepareASTNode(LINE_STATE_ADDED, $name, null, $afterValue);
+                $acc[] = prepareASTNode(LINE_STATE_REMOVED, $name, $beforeValue, $beforeValue);
+            } elseif (is_array($after[$name])) {
+                $acc[] = prepareASTNode(LINE_STATE_ADDED, $name, $afterValue, $afterValue);
+                $acc[] = prepareASTNode(LINE_STATE_REMOVED, $name, $beforeValue, null);
+            } else {
+                $acc[] = prepareASTNode(LINE_STATE_ADDED, $name, null, $afterValue);
+                $acc[] = prepareASTNode(LINE_STATE_REMOVED, $name, $beforeValue, null);
+            }
+        }
+
+        return $acc;
+    }, []);
+
+    return $ast;
+}
+
+function prepareASTNode($state, $name, $before, $after)
+{
+    $value = $before;
+    if (is_array($before) && is_array($after)) {
+        $value = buildAST($before, $after);
+    } elseif ($before === null) {
+        $value = $after;
+    }
+
+    return ['state' => $state, 'name' => $name, 'value' => $value];
+}
+
+function getNormalizedValues($name, $before, $after)
+{
+    $isKeyRemoved = !array_key_exists($name, $after);
+    $isKeyAdded = !array_key_exists($name, $before);
+    if ($isKeyRemoved) {
+        $beforeValue = is_array($before[$name]) ? $before[$name] : stringifyValue($before[$name]);
+        $afterValue = null;
+    } elseif ($isKeyAdded) {
+        $beforeValue = null;
+        $afterValue = is_array($after[$name]) ? $after[$name] : stringifyValue($after[$name]);
+    } else {
+        $afterValue = is_array($after[$name]) ? $after[$name] : stringifyValue($after[$name]);
+        $beforeValue = is_array($before[$name]) ? $before[$name] : stringifyValue($before[$name]);
+    }
+
+    return [$beforeValue, $afterValue];
+}
+
+function stringifyValue($value): string
+{
+    $stringValue = $value;
+    if (is_bool($value)) {
+        $stringValue = $value ? 'true' : 'false';
+    } elseif (is_null($value)) {
+        $stringValue = 'null';
+    }
+
+    return $stringValue;
+}
+
 function buildDiffFromAST(array $ast, int $level = 0)
 {
     $offset = str_pad('', $level * 4, ' ');
@@ -42,87 +117,4 @@ function buildDiffFromAST(array $ast, int $level = 0)
     $diffLines[] = sprintf('%s}', $offset);
 
     return implode(PHP_EOL, $diffLines);
-}
-
-function buildAST(array $before, array $after)
-{
-    $allPropertiesNames = array_unique(array_merge(array_keys($before), array_keys($after)));
-    $ast = array_reduce($allPropertiesNames, function ($acc, $name) use ($before, $after) {
-        $isKeyRemoved = !array_key_exists($name, $after);
-        $isKeyAdded = !array_key_exists($name, $before);
-
-        if ($isKeyAdded || $isKeyRemoved) {
-            $value = $before[$name] ?? $after[$name];
-            $acc[] = [
-                'state' => $isKeyAdded ? LINE_STATE_ADDED : LINE_STATE_REMOVED,
-                'name' => $name,
-                'value' => is_array($value) ? buildAST($value, $value) : stringifyValue($value),
-            ];
-        } elseif ($before[$name] === $after[$name]) {
-            $acc[] = [
-                'state' => LINE_STATE_UNCHANGED,
-                'name' => $name,
-                'value' => is_array($before[$name])
-                    ? buildAST($before[$name], $after[$name])
-                    : stringifyValue($before[$name]),
-            ];
-        } else {
-            if (is_array($before[$name]) && is_array($after[$name])) {
-                $acc[] = [
-                    'state' => LINE_STATE_UNCHANGED,
-                    'name'  => $name,
-                    'value' => buildAST($before[$name], $after[$name]),
-                ];
-            } elseif (is_array($before[$name])) {
-                $acc[] = [
-                    'state' => LINE_STATE_ADDED,
-                    'name' => $name,
-                    'value' => stringifyValue($after[$name])
-                ];
-                $acc[] = [
-                    'state' => LINE_STATE_REMOVED,
-                    'name'  => $name,
-                    'value' => buildAST($before[$name], $before[$name]),
-                ];
-            } elseif (is_array($after[$name])) {
-                $acc[] = [
-                    'state' => LINE_STATE_ADDED,
-                    'name' => $name,
-                    'value' => buildAST($after[$name], $after[$name]),
-                ];
-                $acc[] = [
-                    'state' => LINE_STATE_REMOVED,
-                    'name'  => $name,
-                    'value' => stringifyValue($before[$name])
-                ];
-            } else {
-                $acc[] = [
-                    'state' => LINE_STATE_ADDED,
-                    'name' => $name,
-                    'value' => stringifyValue($after[$name])
-                ];
-                $acc[] = [
-                    'state' => LINE_STATE_REMOVED,
-                    'name' => $name,
-                    'value' => stringifyValue($before[$name])
-                ];
-            }
-        }
-
-        return $acc;
-    }, []);
-
-    return $ast;
-}
-
-function stringifyValue($value): string
-{
-    $stringValue = $value;
-    if (is_bool($value)) {
-        $stringValue = $value ? 'true' : 'false';
-    } elseif (is_null($value)) {
-        $stringValue = 'null';
-    }
-
-    return $stringValue;
 }

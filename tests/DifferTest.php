@@ -14,6 +14,9 @@ class DifferTest extends TestCase
     {
         $diff = getDiff(__DIR__ . '/fixtures/json/before.json', __DIR__ . '/fixtures/json/after.json');
         $this->assertStringEqualsFile(__DIR__ . '/fixtures/json/expected.diff', $diff);
+
+        $diff = getDiff(__DIR__ . '/fixtures/json/nested_before.json', __DIR__ . '/fixtures/json/nested_after.json');
+        $this->assertStringEqualsFile(__DIR__ . '/fixtures/json/nested_expected.diff', $diff);
     }
 
     public function testGenerateDiffForYamlFiles()
