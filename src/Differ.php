@@ -24,10 +24,12 @@ function getDiff(string $firstFile, string $secondFile): string
     }
 
     $parse = getParser($firstFileExtension);
-    $data1 = $parse(file_get_contents($firstFile));
-    $data2 = $parse(file_get_contents($secondFile));
+    $before = $parse(file_get_contents($firstFile));
+    $after = $parse(file_get_contents($secondFile));
+    $ast = buildAST($before, $after);
+    $diff = buildDiffFromAST($ast);
 
-    return generateDiffString($data1, $data2);
+    return $diff;
 }
 
 function generateDiffString(array $before, array $after): string
@@ -101,36 +103,36 @@ function buildAST(array $before, array $after)
                 ];
             } elseif (is_array($before[$name])) {
                 $acc[] = [
-                    'state' => LINE_STATE_REMOVED,
-                    'name'  => $name,
-                    'value' => buildAST($before[$name], $before[$name]),
-                ];
-                $acc[] = [
                     'state' => LINE_STATE_ADDED,
                     'name' => $name,
                     'value' => stringifyValue($after[$name])
                 ];
-            } elseif (is_array($after[$name])) {
                 $acc[] = [
                     'state' => LINE_STATE_REMOVED,
                     'name'  => $name,
-                    'value' => stringifyValue($before[$name])
+                    'value' => buildAST($before[$name], $before[$name]),
                 ];
+            } elseif (is_array($after[$name])) {
                 $acc[] = [
                     'state' => LINE_STATE_ADDED,
                     'name' => $name,
                     'value' => buildAST($after[$name], $after[$name]),
                 ];
-            } else {
                 $acc[] = [
                     'state' => LINE_STATE_REMOVED,
-                    'name' => $name,
+                    'name'  => $name,
                     'value' => stringifyValue($before[$name])
                 ];
+            } else {
                 $acc[] = [
                     'state' => LINE_STATE_ADDED,
                     'name' => $name,
                     'value' => stringifyValue($after[$name])
+                ];
+                $acc[] = [
+                    'state' => LINE_STATE_REMOVED,
+                    'name' => $name,
+                    'value' => stringifyValue($before[$name])
                 ];
             }
         }
