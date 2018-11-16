@@ -4,9 +4,6 @@ namespace Differ;
 
 use function Differ\FileParserFactory\getParser;
 
-const FORMAT_ADDED = '+';
-const FORMAT_REMOVED = '-';
-const FORMAT_UNCHANGED = ' ';
 const LINE_STATE_ADDED = 'added';
 const LINE_STATE_REMOVED = 'removed';
 const LINE_STATE_UNCHANGED = 'unchanged';
@@ -30,31 +27,6 @@ function getDiff(string $firstFile, string $secondFile): string
     $diff = buildDiffFromAST($ast);
 
     return $diff;
-}
-
-function generateDiffString(array $before, array $after): string
-{
-    $allPropertiesNames = array_unique(array_merge(array_keys($before), array_keys($after)));
-
-    $diffStrings = array_reduce($allPropertiesNames, function ($acc, $name) use ($before, $after) {
-        $isKeyRemoved = !array_key_exists($name, $after);
-        $isKeyAdded = !array_key_exists($name, $before);
-
-        if ($isKeyAdded || $isKeyRemoved) {
-            $value = $before[$name] ?? $after[$name];
-            $acc[] = formatDiffString($name, $value, $isKeyAdded ? FORMAT_ADDED : FORMAT_REMOVED);
-        } elseif ($before[$name] === $after[$name]) {
-            $acc[] = formatDiffString($name, $before[$name], FORMAT_UNCHANGED);
-        } else {
-            $acc[] = formatDiffString($name, $after[$name], FORMAT_ADDED);
-            $acc[] = formatDiffString($name, $before[$name], FORMAT_REMOVED);
-        }
-
-        return $acc;
-    }, ['{']);
-    $diffStrings[] = '}';
-
-    return implode(PHP_EOL, $diffStrings);
 }
 
 function buildDiffFromAST(array $ast, int $level = 0)
@@ -141,11 +113,6 @@ function buildAST(array $before, array $after)
     }, []);
 
     return $ast;
-}
-
-function formatDiffString($key, $value, $format): string
-{
-    return sprintf('  %s %s: %s', $format, $key, stringifyValue($value));
 }
 
 function stringifyValue($value): string
